@@ -6,6 +6,7 @@ from dplearn.utils.globalConf import conf
 from dplearn.utils.myServer import *
 from dplearn.utils.myClient import clients
 from models import Client_model
+from models import Dpmodel_model
 
 #client对象
 
@@ -28,8 +29,36 @@ def clientTrain():
 
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
-    candidate.modelSave()
     return packMassage(200, "主机%d训练完毕acc: %f, loss: %f" % (id, acc, loss), {
+        "number":id,
+        "acc": acc,
+        "loss": loss})
+@bp.route('/train_save')
+def clientTrain_Save():
+    user=g.user
+    id = int(request.args.get('id', default='8888'))
+    model_name = request.args.get('model_name', default='model.pkl')
+    candidates=[obj for obj in clients if obj.client_id==id]
+    if len(candidates)==0:
+        return packMassage(400,"不存在请求的主机号！",{})
+
+    candidate=candidates[0]
+    print("选中的主机号为%d" % candidate.client_id)
+
+    print("client %d local train start..."% id )
+    diff = candidate.local_train(server.global_model)
+    # 根据客户端的参数差值字典更新总体权重
+    for name, params in server.global_model.state_dict().items():
+        weight_accumulator[name].add_(diff[name])
+
+    acc, loss = candidate.model_eval()
+    print(" acc: %f, loss: %f\n" % (acc, loss))
+    content=candidate.getModel()
+    model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content))
+    db.session.add(model)
+    db.session.commit()
+
+    return packMassage(200, "主机%d训练完毕acc: %f, loss: %f,并已保存" % (id, acc, loss), {
         "number":id,
         "acc": acc,
         "loss": loss})
@@ -80,13 +109,20 @@ def clientDelete():
         return packMassage(400, "删除失败！主机不存在", {})
 @bp.route('/load')
 def clientLoad():
+    user=g.user
+
     id = int(request.args.get('id', default='8888'))
+    model_name = request.args.get('model_name', default='')
     candidates = [obj for obj in clients if obj.client_id == id]
     if len(candidates) == 0:
         return packMassage(400, "不存在请求的主机号！", {})
-
     candidate = candidates[0]
-    candidate.modelLoad()
+
+    dpmodel =Dpmodel_model.query.filter_by(user_id=user.id,model_name=model_name).first()
+    if dpmodel==None:
+        return packMassage(400, "不存在模型！", {})
+
+    candidate.modelLoad(dpmodel.content)
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
     return " acc: %f, loss: %f\n" % (acc, loss)

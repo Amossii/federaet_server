@@ -68,12 +68,13 @@ class Client:
         print("Client %d local train done" % self.client_id)
         # 客户端返回差值
         return diff
+    def getModel(self):
+        return self.local_model
     def modelSave(self):
         with open('file/models/model.pkl', 'wb') as f:
             pickle.dump(self.local_model, f)
-    def modelLoad(self):
-        with open('file/models/model.pkl', 'rb') as f:
-            self.local_model = pickle.load(f)
+    def modelLoad(self,content):
+        self.local_model = pickle.loads(content)
     def model_eval(self):
         self.local_model.eval()  # 开启模型评估模式（不修改参数）
         total_loss = 0.0
