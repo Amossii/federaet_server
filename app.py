@@ -8,6 +8,7 @@ from blueprints.test import bp as test_bp
 from blueprints.resources import bp as resources_bp
 from blueprints.server import bp as server_bp
 from blueprints.client import bp as client_bp
+from blueprints.model import bp as model_bp
 
 from flask_cors import CORS
 
@@ -29,7 +30,7 @@ app.register_blueprint(test_bp)
 app.register_blueprint(resources_bp)
 app.register_blueprint(server_bp)
 app.register_blueprint(client_bp)
-
+app.register_blueprint(model_bp)
 no_use_url=['/auth/login?','/auth/register?','/auth/check?','/auth/logout?','/captcha?']
 
 @app.before_request

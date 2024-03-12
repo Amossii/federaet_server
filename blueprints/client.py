@@ -35,14 +35,7 @@ def clientTrain():
         "loss": loss})
 @bp.route('/init',methods=['POST'])
 def clientInit():
-    dataloader=Dataloader()
-    conf_data = request.json
-    for  i in conf_data.keys():
-        index=int(i)
-        train_datasets=dataloader.getTrainData([conf_data[i]])
-        clients.append(Client(conf, server.global_model, train_datasets, index))
-
-    return packMassage(200,'初始化成功！',conf_data)
+    pass
 
 @bp.route('/clear')
 def clientClearall():

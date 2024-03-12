@@ -49,10 +49,6 @@ class Client:
         for e in range(self.conf["local_epochs"]):
             for batch_id, batch in enumerate(self.train_loader):
                 data, target = batch
-                # 加载到gpu
-                if torch.cuda.is_available():
-                    data = data.cuda()
-                    target = target.cuda()
                 # 梯度
                 optimizer.zero_grad()
                 # 训练预测
@@ -88,10 +84,6 @@ class Client:
             data, target = batch
             # 获取所有的样本总量大小
             dataset_size += data.size()[0]
-            # # 存储到gpu
-            # if torch.cuda.is_available():
-            #     data = data.cuda()
-            #     target = target.cuda()
             # 加载到模型中训练
             output = self.local_model(data)
             # 聚合所有的损失 cross_entropy交叉熵函数计算损失

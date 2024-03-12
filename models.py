@@ -26,3 +26,14 @@ class Client_model(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="clients")
 
+class Dpmodel_model(db.Model):
+    __tablename__ = "model"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    content = db.Column(db.LargeBinary(16777216), nullable=False)
+    model_name = db.Column(db.String(100), nullable=False)
+    join_time = db.Column(db.DateTime, default=datetime.now)
+    file_size = db.Column(db.Integer, default=0)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", backref="models")
+
