@@ -1,5 +1,6 @@
 from flask import Flask,session,g,request,jsonify
 from exts import db
+
 import config
 from models import User
 from blueprints.file import bp as file_bp
@@ -31,7 +32,7 @@ app.register_blueprint(resources_bp)
 app.register_blueprint(server_bp)
 app.register_blueprint(client_bp)
 app.register_blueprint(model_bp)
-no_use_url=['/auth/login?','/auth/register?','/auth/check?','/auth/logout?','/captcha?']
+no_use_url=['/auth/login?','/auth/register?','/auth/check?','/auth/logout?','/captcha?','/auth/set?']
 
 @app.before_request
 def myRequest():

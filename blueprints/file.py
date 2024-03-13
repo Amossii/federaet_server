@@ -36,9 +36,9 @@ def fileAdd():
 
 @bp.route('/delete')
 def fileDelete():
-    filename = request.args.get('filename', default='admin')
+    id = request.args.get('id', default='admin')
     user=g.user
-    file = File.query.filter_by(user_id=user.id,filename=filename).first()
+    file = File.query.get(id)
     if file:
         db.session.delete(file)
         db.session.commit()
@@ -47,3 +47,23 @@ def fileDelete():
         return packMassage(400, "文件不存在", {})
 
 
+@bp.route('/upload', methods=['POST'])
+def upload_file():
+    user=g.user
+    # 检查是否存在上传文件
+    if 'file' not in request.files:
+        return packMassage(400,'no file',{})
+
+    file = request.files['file']
+
+    # 检查文件名是否为空
+    if file.filename == '':
+        return packMassage(400,'No selected file',{})
+
+    # 保存文件到指定路径
+    content=file.read()
+    file = File(content=content, filename=file.filename, user_id=user.id, file_size=len(content))
+    db.session.add(file)
+    db.session.commit()
+
+    return packMassage(200,'File uploaded successfully',{})

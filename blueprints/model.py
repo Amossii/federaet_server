@@ -10,7 +10,7 @@ def modelQuery():
     for model in user.models:
         data.append({
                     'id':model.id,
-                    'filename': model.model_name,
+                    'modelname': model.model_name,
                     'username': user.username,
                     'join_time': model.join_time,
                     'acc':model.acc,
