@@ -69,7 +69,7 @@ class Client:
         # 客户端返回差值
         return diff
     def getModel(self):
-        return self.local_model
+        return pickle.dumps(self.local_model)
     def modelSave(self):
         with open('file/models/model.pkl', 'wb') as f:
             pickle.dump(self.local_model, f)

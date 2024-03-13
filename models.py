@@ -33,6 +33,8 @@ class Dpmodel_model(db.Model):
     model_name = db.Column(db.String(100), nullable=False)
     join_time = db.Column(db.DateTime, default=datetime.now)
     file_size = db.Column(db.Integer, default=0)
+    acc=db.Column(db.Double,default=0)
+    loss=db.Column(db.Double,default=0)
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="models")

@@ -54,7 +54,7 @@ def clientTrain_Save():
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
     content=candidate.getModel()
-    model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content))
+    model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content),acc=acc,loss=loss)
     db.session.add(model)
     db.session.commit()
 
