@@ -1,4 +1,5 @@
 import os
+import pickle
 
 from exts import *
 from models import File
@@ -67,3 +68,23 @@ def upload_file():
     db.session.commit()
 
     return packMassage(200,'File uploaded successfully',{})
+@bp.route('/photo')
+def save():
+    user=g.user
+    def unpickle(file):
+        import pickle
+        with open(file, 'rb') as fo:
+            dict = pickle.load(fo, encoding='bytes')
+        return dict
+    # 读取数据，并显示数据结构
+    dict = unpickle('D:\Python\myapp\\file\data_batch_1')
+    for i in range(2,10):
+        dic = {b'data': dict[b'data'][i].reshape(1,3072),
+               b'batch_label': dict[b'batch_label'][i],
+               b'labels': [dict[b'labels'][i]],
+               b'filenames': dict[b'filenames'][i]}
+        content=pickle.dumps(dic)
+        file = File(content=content, filename='photo'+str(i)+'_'+str(dict[b'labels'][i]), user_id=user.id, file_size=len(content))
+        db.session.add(file)
+    db.session.commit()
+    return "done"

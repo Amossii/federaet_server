@@ -6,8 +6,10 @@ bp=Blueprint('auth',__name__,url_prefix="/auth")
 def login():
     username = request.args.get('username', default='admin')
     password = request.args.get('password', default='admin')
+    if not username or not password:
+        return packMassage(400,'lack of parameters',{})
     user = User.query.filter_by(username=username).first()
-    if user==None:
+    if not user:
         return packMassage(400, "用户名不存在！", {})
     elif not user._check_password(password):
         return packMassage(400, "密码错误！", {})

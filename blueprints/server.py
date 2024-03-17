@@ -1,4 +1,6 @@
 import json
+import pickle
+
 from exts import *
 from models import *
 import random
@@ -29,6 +31,9 @@ def serverInit():
 #         weight_accumulator[name] = torch.zeros_like(params)
 #
 #     return packMassage(200,'初始化成功！',{})
+@bp.route('/save')
+def serverSave():
+    pass
 @bp.route('/clear')
 def serverClear():
     conf.clear()
@@ -46,6 +51,7 @@ def serverAggregate():
 
 @bp.route('/conf',methods=['POST'])
 def getConf():
+    user=g.user
     conf_data=request.json
     if not conf_data:
         return packMassage(400,'初始化全局参数失败，请重试！',conf_data)
@@ -54,7 +60,15 @@ def getConf():
     filename = conf['test_file']
     dataloader = Dataloader()
     eval_datasets = dataloader.getEvalData([filename])
-    server.myInit(conf, eval_datasets)
+    # init global model with the previous model
+
+    if conf['model_init']!="None":
+        model=Dpmodel_model.query.filter_by(user_id=user.id, model_name=conf['model_init']).first()
+        if not model:
+            return packMassage(400,'init with a model name not exist',{})
+        server.myInit(conf,eval_datasets,model.content)
+    else:
+        server.myInit(conf, eval_datasets,None)
     #初始化weight
     weight_accumulator.clear()
     for name, params in server.global_model.state_dict().items():
@@ -71,9 +85,16 @@ def getConf():
     return packMassage(200, '初始化成功！', conf)
 @bp.route('/eval')
 def eval():
+    user=g.user
+    model_name=request.args.get('model_name',default='model_global')
     acc, loss = server.model_eval()
     print(" acc: %f, loss: %f\n" % ( acc, loss))
-    return packMassage(200,"acc: %f, loss: %f" % ( acc, loss),{
+    content = server.getModel()
+    model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content), acc=acc,
+                          loss=loss)
+    db.session.add(model)
+    db.session.commit()
+    return packMassage(200,"acc: %f, loss: %f,model has already saved" % ( acc, loss),{
         "acc":acc,
         "loss":loss })
 @bp.route('/test')
@@ -111,3 +132,24 @@ def test():
         print("Epoch %d, acc: %f, loss: %f\n" % (e, acc, loss))
     return "This is a test!"
 
+@bp.route('/predict')
+def predict():
+    user=g.user
+    filename = request.args.get('filename', default='admin')
+    dataloader = Dataloader()
+    predict_datasets = dataloader.getEvalData([filename])
+    predict,target=server.model_predict(predict_datasets)
+    return packMassage(200,'predict is done,and target %d answer is %d'%(target,predict),{'target':target,'predict':predict})
+@bp.route('/heat')
+def heat():
+
+    user = g.user
+    filename = request.args.get('filename', default='admin')
+    # dataloader = Dataloader()
+    # predict_datasets = dataloader.getEvalData([filename])
+    file=File.query.filter_by(filename=filename,user_id=user.id).first()
+    nd=pickle.loads(file.content)[b'data']
+    print(type(nd))
+    print(nd.shape)
+    server.heat()
+    return "done"

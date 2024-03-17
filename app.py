@@ -10,7 +10,7 @@ from blueprints.resources import bp as resources_bp
 from blueprints.server import bp as server_bp
 from blueprints.client import bp as client_bp
 from blueprints.model import bp as model_bp
-
+from urllib.parse import urlparse
 from flask_cors import CORS
 
 
@@ -32,7 +32,7 @@ app.register_blueprint(resources_bp)
 app.register_blueprint(server_bp)
 app.register_blueprint(client_bp)
 app.register_blueprint(model_bp)
-no_use_url=['/auth/login?','/auth/register?','/auth/check?','/auth/logout?','/captcha?','/auth/set?']
+no_use_url=['/auth/login','/auth/register','/auth/check','/auth/logout','/captcha']
 
 @app.before_request
 def myRequest():
@@ -43,7 +43,9 @@ def myRequest():
     else:
         setattr(g, 'user', None)
     full_path=request.full_path
-    if full_path not in no_use_url:
+    parsed_url = urlparse(full_path)
+    path_without_params = parsed_url.path
+    if path_without_params not in no_use_url:
         if not userID:
            return jsonify({
               "code": 200,

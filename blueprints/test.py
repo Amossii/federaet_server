@@ -71,3 +71,4 @@ def olda():
 def newa():
     a[0]=1000
     return str(a[0])
+

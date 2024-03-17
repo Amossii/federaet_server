@@ -47,7 +47,8 @@ def clientTrain_Save():
 
     print("client %d local train start..."% id )
     diff = candidate.local_train(server.global_model)
-    # 根据客户端的参数差值字典更新总体权重
+
+    # 根据客户端的参数差值字典更新权重
     for name, params in server.global_model.state_dict().items():
         weight_accumulator[name].add_(diff[name])
 

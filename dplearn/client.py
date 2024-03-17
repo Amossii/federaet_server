@@ -99,4 +99,5 @@ class Client:
             correct += pred.eq(target.data.view_as(pred)).cpu().sum().item()
         acc = 100.0 * (float(correct) / float(dataset_size))  # 计算准确率
         total_1 = total_loss / dataset_size  # 计算损失值
+        self.local_model.train()
         return acc, total_1
