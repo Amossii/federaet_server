@@ -13,8 +13,8 @@ import torch.nn as nn
 
 class Server:
     # 定义构造函数
-    # def __init__(self):
-    #   pass
+    def __init__(self):
+      self.global_model=None
     def myInit(self,conf,eval_dataset,model_init):
         # 导入配置文件
         self.conf = conf

@@ -38,6 +38,10 @@ class Client_model(db.Model):
     number=db.Column(db.Integer,unique=True)
     filename = db.Column(db.String(100), nullable=False)
     join_time = db.Column(db.DateTime, default=datetime.now)
+    model_name = db.Column(db.String(100), nullable=False)
+    flag = db.Column(db.String(100), nullable=False)
+    model_id = db.Column(db.Integer)
+
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="clients")
 

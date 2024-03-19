@@ -75,14 +75,22 @@ def getConf():
         # 生成一个和参数矩阵大小相同的0矩阵
         weight_accumulator[name] = torch.zeros_like(params)
     #添加client到clients里
+
     clients.clear()
     dataloader = Dataloader()
     all_clients=g.user.clients
     for client in all_clients:
         index = client.number
         train_datasets = dataloader.getTrainData([client.filename])
-        clients.append(Client(conf, server.global_model, train_datasets, eval_datasets,index))
+        new_client=Client(conf, server.global_model, train_datasets, eval_datasets,index)
+        if client.model_name!="Null":
+            dpmodel = Dpmodel_model.query.filter_by(user_id=user.id, model_name=client.model_name).first()
+            if dpmodel == None:
+                return packMassage(400, "initial model is not exist!", {"id":client.id,"model_name":client.model_name})
+            new_client.modelLoad(dpmodel.content)
+        clients.append(new_client)
     return packMassage(200, '初始化成功！', conf)
+
 @bp.route('/eval')
 def eval():
     user=g.user
