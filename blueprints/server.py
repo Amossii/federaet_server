@@ -42,12 +42,33 @@ def serverClear():
 
 @bp.route('/aggregate')
 def serverAggregate():
-    server.model_aggregate(weight_accumulator)
+    user=g.user
+    filename=request.args.get("filename",default="global_aggregate")
+    # 初始化weight
     weight_accumulator.clear()
     for name, params in server.global_model.state_dict().items():
         # 生成一个和参数矩阵大小相同的0矩阵
         weight_accumulator[name] = torch.zeros_like(params)
-    return "done"
+
+    for client in clients:
+        model_name=client.local_model_name
+        content=Dpmodel_model.query.filter_by(user_id=user.id,model_name=model_name).first().content
+        client.modelLoad(content)
+        diff=client.getDiff(server.global_model)
+        for name, params in server.global_model.state_dict().items():
+            weight_accumulator[name].add_(diff[name])
+
+    server.model_aggregate(weight_accumulator)
+    weight_accumulator.clear()
+
+    #save the model
+    content=server.getModel()
+    acc,loss=server.model_eval()
+    model = Dpmodel_model(content=content, model_name=filename, user_id=user.id, file_size=len(content), acc=acc,
+                          loss=loss)
+    db.session.add(model)
+    db.session.commit()
+    return packMassage(200,"the acc is %f,loss is %f" % (acc,loss),{"acc":acc,"loss":loss})
 
 @bp.route('/conf',methods=['POST'])
 def getConf():
@@ -69,11 +90,7 @@ def getConf():
         server.myInit(conf,eval_datasets,model.content)
     else:
         server.myInit(conf, eval_datasets,None)
-    #初始化weight
-    weight_accumulator.clear()
-    for name, params in server.global_model.state_dict().items():
-        # 生成一个和参数矩阵大小相同的0矩阵
-        weight_accumulator[name] = torch.zeros_like(params)
+
     #添加client到clients里
 
     clients.clear()
@@ -82,12 +99,7 @@ def getConf():
     for client in all_clients:
         index = client.number
         train_datasets = dataloader.getTrainData([client.filename])
-        new_client=Client(conf, server.global_model, train_datasets, eval_datasets,index)
-        if client.model_name!="Null":
-            dpmodel = Dpmodel_model.query.filter_by(user_id=user.id, model_name=client.model_name).first()
-            if dpmodel == None:
-                return packMassage(400, "initial model is not exist!", {"id":client.id,"model_name":client.model_name})
-            new_client.modelLoad(dpmodel.content)
+        new_client=Client(conf, server.global_model, train_datasets, eval_datasets,index,client.model_name)
         clients.append(new_client)
     return packMassage(200, '初始化成功！', conf)
 

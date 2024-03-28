@@ -99,62 +99,7 @@ class Server:
             pred = output.data.max(1)[1]
         self.global_model.train()
         return pred.item(),target.item()
-    # def heat(self,predict_dataset):
-    #     # input_shape=[32,32]
-    #     # # 加载一个transforms用于变形，input_shape为预设的图像尺寸
-    #     # transform = transforms.Compose([transforms.Resize((input_shape[0],input_shape[1])),
-    #     #                                 transforms.ToTensor(),
-    #     #                                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ])
-    #     # image = Image.open('D:\Python\myapp\\file\img\Figure_2.jpg')  # image_path为文件路径
-    #     # input_tensor = transform(image)  # 将图片转换为tensor类型
-    #     # input_batch = input_tensor.unsqueeze(0)  # 为tensor添加batch维度
-    #     # print(input_tensor)
-    #     # print(input_batch)
-    #     # self.feature_extractor =nn.Sequential(*list(self.global_model.children())[:-2])
-    #     # 前向传递
-    #     layers = list(self.global_model.children())[:-3]
-    #     layers.append(nn.AvgPool2d(kernel_size=3, stride=2, padding=1))
-    #     self.feature_extractor = torch.nn.Sequential(*layers)
-    #     self.feature_extractor.eval()
-    #     for batch_id, batch in enumerate(torch.utils.data.DataLoader(predict_dataset)):
-    #         data, target = batch
-    #         output = self.feature_extractor(data)
-    #         print(output.data.max(1))
-    #         data=data.unsqueeze(0)
-    #
-    #         heatmap = torch.sum(output, dim=1)
-    #         output = self.feature_extractor(data)
-    #         print(output.data.max(1)[1])
-    #
-    #     # with torch.no_grad():
-    #     #     output = self.global_model(input_batch)
-    #     #     pred = output.data.max(1)[1]
-    #     #     print(pred)
-    #
-    #     heatmap = torch.sum(output, dim=1)  # 所有通道求和
-    #     max_value = torch.max(heatmap)
-    #     min_value = torch.min(heatmap)
-    #     heatmap = (heatmap - min_value) / (max_value - min_value) * 255
-    #     print(type(heatmap))
-    #     print(heatmap.shape)
-    #     print(heatmap)
-    #     heatmap = heatmap.cpu().numpy().astype(np.uint8).transpose(2, 0, 1)  # 提取热力图
-    #
-    #     heatmap = cv2.resize(heatmap, input_shape, interpolation=cv2.INTER_LINEAR)  # 还原尺寸
-    #
-    #     # 将矩阵转换为image类
-    #     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    #     heatimg = Image.fromarray(heatmap)
-    #
-    #     # 将热力图叠加到原图上
-    #     org_size = image.size
-    #     heatimg = heatimg.resize(org_size)  # 将热力图变回输入图像的尺寸
-    #     plt.axis('off')
-    #     plt.imshow(image)
-    #     plt.imshow(heatimg, alpha=0.5)  # alpha为热力图的透明度
-    #
-    #     # 显示叠加后的图形
-    #     plt.show()
+
     def heat(self):
         from torchcam.methods import GradCAM
         target_layer = self.global_model.layer4[-1]  # 选择目标层

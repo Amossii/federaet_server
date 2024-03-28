@@ -2,13 +2,14 @@ import torch
 import pickle
 class Client:
     # 构造函数
-    def __init__(self, conf, model, train_dataset,eval_dataset, id=1):
+    def __init__(self, conf, model, train_dataset,eval_dataset, id,local_model_name):
         # 配置文件
         self.conf = conf
         # 客户端本地模型(一般由服务器传输)
         self.local_model = model
         # 客户端ID
         self.client_id = id
+        self.local_model_name=local_model_name
         # 客户端本地数据集
         self.train_dataset = train_dataset
         self.eval_dataset= eval_dataset
@@ -61,6 +62,14 @@ class Client:
                 optimizer.step()
             print("Epoch %d done" % e)
         # 创建差值字典（结构与模型参数同规格），用于记录差值
+        diff = dict()
+        for name, data in self.local_model.state_dict().items():
+            # 计算训练后与训练前的差值
+            diff[name] = (data - model.state_dict()[name])
+        print("Client %d local train done" % self.client_id)
+        # 客户端返回差值
+        return diff
+    def getDiff(self,model):
         diff = dict()
         for name, data in self.local_model.state_dict().items():
             # 计算训练后与训练前的差值
