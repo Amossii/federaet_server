@@ -114,7 +114,6 @@ def query():
         return packMassage(400,'你无权访问此页面，请先获取权限',{})
 
     users=User.query.all()
-
     data=[{'id':user.id,
            'username':user.username,
            'password':user.password,

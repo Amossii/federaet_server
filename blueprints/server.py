@@ -1,6 +1,7 @@
 import json
 import pickle
-
+import cv2
+import numpy as np
 from exts import *
 from models import *
 import random
@@ -165,11 +166,11 @@ def heat():
 
     user = g.user
     filename = request.args.get('filename', default='admin')
-    # dataloader = Dataloader()
-    # predict_datasets = dataloader.getEvalData([filename])
     file=File.query.filter_by(filename=filename,user_id=user.id).first()
     nd=pickle.loads(file.content)[b'data']
-    print(type(nd))
-    print(nd.shape)
-    server.heat()
+
+    nd=nd.reshape(3,32,32)
+    cv2.imwrite('D:\Python\myapp\\file\img\Figure_3.jpg'
+        , np.transpose(nd, (1, 2, 0)))
+    server.heat('D:\Python\myapp\\file\img\Figure_3.jpg')
     return "done"

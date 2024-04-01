@@ -100,11 +100,11 @@ class Server:
         self.global_model.train()
         return pred.item(),target.item()
 
-    def heat(self):
+    def heat(self,file_path):
         from torchcam.methods import GradCAM
         target_layer = self.global_model.layer4[-1]  # 选择目标层
         cam_extractor = GradCAM(self.global_model, target_layer)
-        img_path = 'D:\Python\myapp\\file\img\Figure_2.jpg'
+        img_path = file_path
         img_pil = Image.open(img_path)
 
         from torchvision import transforms

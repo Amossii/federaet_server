@@ -35,6 +35,6 @@ def getphoto():
 
     base64_data = b'data:image/png;base64,' + img_str
     return packMassage(200, '发送成功', {
-        'captchaURL': base64_data.decode(),
+        'photoURL': base64_data.decode(),
         'photoname':dict[b'filenames'].decode()
     })
