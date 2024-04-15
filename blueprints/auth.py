@@ -2,7 +2,7 @@ from exts import *
 from models import *
 bp=Blueprint('auth',__name__,url_prefix="/auth")
 
-@bp.route('/login',methods=['POST','GET'])
+@bp.route('/login',methods=['post'])
 def login():
     username = request.args.get('username', default='admin')
     password = request.args.get('password', default='admin')
@@ -23,7 +23,7 @@ def logout():
     session.clear()
     return packMassage(200, "退出登录成功！", {})
 
-@bp.route('/register')
+@bp.route('/user',methods=['post'])
 def register():
     username = request.args.get('username', default='admin')
     password = request.args.get('password', default='admin')
@@ -74,7 +74,7 @@ def getInfo():
         "taskTotal":taskTotal,
         "transcodeTotal":transcodeTotal
     })
-@bp.route('/set')
+@bp.route('/user',methods=['PUT'])
 def set():
     id=request.args.get('id', default='0')
     username = request.args.get('username', default='admin')
@@ -96,7 +96,7 @@ def set():
         'access': access,
         'email': email
     })
-@bp.route('/delete')
+@bp.route('/user',methods=['DELETE'])
 def delete():
     id = request.args.get('id', default='0')
     user = User.query.get(id)
@@ -107,7 +107,7 @@ def delete():
         db.session.commit()
         return packMassage(200, "用户%s删除成功！" % (user.username), {})
 
-@bp.route('/query')
+@bp.route('/user',methods=['get'])
 def query():
     user=g.user
     if user.access==0:

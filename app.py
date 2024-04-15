@@ -20,7 +20,7 @@ app.json.ensure_ascii = False
 db.init_app(app)
 allowed_origins = ['http://localhost:5173','http://localhost:8080',]
 
-CORS(app, supports_credentials=True,origins=allowed_origins,methods=["GET", "POST"], allow_headers=["Content-Type", "X-Token"])
+CORS(app, supports_credentials=True,origins=allowed_origins,methods=["GET", "POST","PUT","DELETE"], allow_headers=["Content-Type", "X-Token"])
 with app.app_context():
     db.create_all()
 
@@ -32,7 +32,7 @@ app.register_blueprint(resources_bp)
 app.register_blueprint(server_bp)
 app.register_blueprint(client_bp)
 app.register_blueprint(model_bp)
-no_use_url=['/auth/login','/auth/register','/auth/check','/auth/logout','/captcha']
+no_use_url=['/auth/login','/auth/user','/auth/check','/auth/logout','/captcha']
 
 @app.before_request
 def myRequest():

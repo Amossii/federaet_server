@@ -6,7 +6,7 @@ from models import File
 from models import User
 bp=Blueprint('file',__name__,url_prefix='/file')
 
-@bp.route('/query')
+@bp.route('/',methods=['get'])
 def fileQuery():
     user=g.user
     data=[]
@@ -35,7 +35,7 @@ def fileAdd():
         f.close()
     return packMassage(200,"文件添加完成！",{})
 
-@bp.route('/delete')
+@bp.route('/',methods=['DELETE'])
 def fileDelete():
     id = request.args.get('id', default='admin')
     user=g.user
@@ -48,8 +48,8 @@ def fileDelete():
         return packMassage(400, "文件不存在", {})
 
 
-@bp.route('/upload', methods=['POST'])
-def upload_file():
+@bp.route('/', methods=['POST'])
+def fileUpload():
     user=g.user
     # 检查是否存在上传文件
     if 'file' not in request.files:
