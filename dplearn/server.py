@@ -15,15 +15,19 @@ class Server:
     # 定义构造函数
     def __init__(self):
       self.global_model=None
-    def myInit(self,conf,eval_dataset,model_init):
+    def myInit(self,conf,eval_dataset,model_init,epoch):
         # 导入配置文件
         self.conf = conf
+        self.epoch=epoch
         # 根据配置获取模型文件
         self.global_model=None
+
         if model_init==None:
+            #从库中初始化一个model
             self.global_model = models.get_model(self.conf["model_name"])
             self.global_model.fc = nn.Linear(512, 10)
         else:
+            #继承一个model
             self.global_model = pickle.loads(model_init)
         # 生成一个测试集合加载器
 
@@ -53,16 +57,16 @@ class Server:
     # weight_accumulator 存储了每一个客户端的上传参数变化值/差值
     def model_aggregate(self, weight_accumulator):
       # 遍历服务器的全局模型
-      for name, data in self.global_model.state_dict().items():
+        for name, data in self.global_model.state_dict().items():
         # 更新每一层乘上学习率
-        update_per_layer = weight_accumulator[name] * self.conf["lambda"]
+            update_per_layer = weight_accumulator[name] * self.conf["lambda"]
         # 累加和
         if data.type() != update_per_layer.type():
-            # 因为update_per_layer的type是floatTensor，所以将起转换为模型的LongTensor（有一定的精度损失）
+        # 因为update_per_layer的type是floatTensor，所以将起转换为模型的LongTensor（有一定的精度损失）
             data.add_(update_per_layer.to(torch.int64))
         else:
             data.add_(update_per_layer)
-
+        self.epoch+=1
             # 评估函数
     def model_eval(self):
         self.global_model.eval()    # 开启模型评估模式（不修改参数）

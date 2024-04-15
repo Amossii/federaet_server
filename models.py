@@ -58,3 +58,13 @@ class Dpmodel_model(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="models")
 
+class Epoch(db.Model):
+    __tablename__='epoch'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    epoch = db.Column(db.Integer, default=0)
+    is_server=db.Column(db.Integer, default=0)
+    model_id=db.Column(db.Integer, default=0)
+    model_name=db.Column(db.String(100), nullable=False)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", backref="models")

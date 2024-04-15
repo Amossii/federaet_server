@@ -44,6 +44,7 @@ def serverClear():
 @bp.route('/aggregate')
 def serverAggregate():
     user=g.user
+    epoch = conf['epoch']
     filename=request.args.get("filename",default="global_aggregate")
     # 初始化weight
     weight_accumulator.clear()
@@ -53,11 +54,14 @@ def serverAggregate():
 
     for client in clients:
         model_name=client.local_model_name
-        content=Dpmodel_model.query.filter_by(user_id=user.id,model_name=model_name).first().content
-        client.modelLoad(content)
+        client_model=Dpmodel_model.query.filter_by(user_id=user.id,model_name=model_name).first()
+        client.modelLoad(client_model.content)
         diff=client.getDiff(server.global_model)
         for name, params in server.global_model.state_dict().items():
             weight_accumulator[name].add_(diff[name])
+
+        #save epoch info into database
+
 
     server.model_aggregate(weight_accumulator)
     weight_accumulator.clear()
@@ -71,6 +75,8 @@ def serverAggregate():
     db.session.commit()
     return packMassage(200,"the acc is %f,loss is %f" % (acc,loss),{"acc":acc,"loss":loss})
 
+
+
 @bp.route('/conf',methods=['POST'])
 def getConf():
     user=g.user
@@ -83,14 +89,14 @@ def getConf():
     dataloader = Dataloader()
     eval_datasets = dataloader.getEvalData([filename])
     # init global model with the previous model
-
+    epoch=conf['epoch']
     if conf['model_init']!="None":
         model=Dpmodel_model.query.filter_by(user_id=user.id, model_name=conf['model_init']).first()
         if not model:
             return packMassage(400,'init with a model name not exist',{})
-        server.myInit(conf,eval_datasets,model.content)
+        server.myInit(conf,eval_datasets,model.content,epoch)
     else:
-        server.myInit(conf, eval_datasets,None)
+        server.myInit(conf, eval_datasets,None,epoch)
 
     #添加client到clients里
 

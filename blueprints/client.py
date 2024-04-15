@@ -24,10 +24,10 @@ def clientTrain():
     print("选中的主机号为%d" % candidate.client_id)
 
     print("client %d local train start..."% id )
-    diff = candidate.local_train(server.global_model)
+    # diff = candidate.local_train(server.global_model)
     # 根据客户端的参数差值字典更新总体权重
-    for name, params in server.global_model.state_dict().items():
-        weight_accumulator[name].add_(diff[name])
+    # for name, params in server.global_model.state_dict().items():
+    #     weight_accumulator[name].add_(diff[name])
 
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
@@ -89,7 +89,7 @@ def clientClearall():
     clients.clear()
     return "hello"
 
-@bp.route('/add')
+@bp.route('/',methods=['post'])
 def clientAdd():
     number = request.args.get('number', default='8888')
     filename=request.args.get('filename',default='hahha')
@@ -114,7 +114,7 @@ def clientAdd():
     db.session.add(client)
     db.session.commit()
     return packMassage(200,'添加主机成功！',{})
-@bp.route('/query')
+@bp.route('/',methods=['get'])
 def clientQuery():
     user = g.user
     data = []
@@ -130,7 +130,7 @@ def clientQuery():
             "model_id":client.model_id})
     return packMassage(200, "获取用户主机成功!", {'fileInfo': data})
 
-@bp.route('/delete')
+@bp.route('/',methods=['delete'])
 def clientDelete():
     number = request.args.get('number',default=-1)
     user = g.user
