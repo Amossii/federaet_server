@@ -3,7 +3,7 @@ from exts import *
 from models import Dpmodel_model
 bp=Blueprint('dpmodel',__name__,url_prefix='/model')
 
-@bp.route('/query')
+@bp.route('/',methods=['get'])
 def modelQuery():
     user=g.user
     data=[]
@@ -16,7 +16,7 @@ def modelQuery():
                     'acc':model.acc,
                     'loss':model.loss})
     return packMassage(200,"获取用户模型成功!",{'fileInfo':data})
-@bp.route('/add')
+@bp.route('/',methods=['post'])
 def modelAdd():
     files = ['model.pkl']
     user=g.user
@@ -30,7 +30,7 @@ def modelAdd():
             db.session.commit()
         f.close()
     return packMassage(200,"模型添加完成！",{})
-@bp.route('/delete')
+@bp.route('/',methods=['delete'])
 def modelDelete():
     model_id = request.args.get('id', default='0')
     user = g.user
