@@ -59,13 +59,15 @@ def clientTrain_Save():
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
     content=candidate.getModel()
-    model_name=str(id)+'_'+"{:.3f}".format(acc)+"_"+"{:.3f}".format(loss)
+    model_name=str(id)+'_'+"{:.3f}".format(acc)+"_"+"{:.3f}".format(loss)+"epoch"+conf['epoch']
     candidate.local_model_name=model_name
+
     model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content),acc=acc,loss=loss)
     db.session.add(model)
     db.session.commit()
 
     model=Dpmodel_model.query.filter_by(user_id=user.id,model_name=model_name).first()
+    candidate.model_id =model.id
 
     client=Client_model.query.filter_by(user_id=user.id,number=id).first()
     client.model_name=model_name
@@ -80,6 +82,7 @@ def clientTrain_Save():
         "number":id,
         "acc": acc,
         "loss": loss})
+
 @bp.route('/init',methods=['POST'])
 def clientInit():
     pass
@@ -97,18 +100,16 @@ def clientAdd():
 
     if model_name!="Null":
         model=Dpmodel_model.query.filter_by(model_name=model_name).first()
+        flag = "success"
+        model_id = model.id
+    else:
+        flag = "fail"
+        model_id = -1
 
     user = g.user
     client = Client_model.query.filter_by(user_id=user.id, number=number).first()
     if client:
         return packMassage(400,'添加主机失败，因为主机number重复！',{})
-
-    if model_name!="Null":
-        flag="success"
-        model_id = model.id
-    else:
-        flag="fail"
-        model_id = -1
 
     client = Client_model(user_id=user.id, filename=filename, number=number,model_name=model_name,flag=flag,model_id=model_id)
     db.session.add(client)

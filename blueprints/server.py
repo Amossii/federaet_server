@@ -46,6 +46,7 @@ def serverAggregate():
     user=g.user
     epoch = conf['epoch']
     filename=request.args.get("filename",default="global_aggregate")
+    filename=filename+'_epoch'+str(epoch)
     # 初始化weight
     weight_accumulator.clear()
     for name, params in server.global_model.state_dict().items():
@@ -53,15 +54,20 @@ def serverAggregate():
         weight_accumulator[name] = torch.zeros_like(params)
 
     for client in clients:
-        model_name=client.local_model_name
-        client_model=Dpmodel_model.query.filter_by(user_id=user.id,model_name=model_name).first()
+        model_id=client.model_id
+        if model_id==-1:
+            return packMassage(400,"client model is not exist",{})
+        print(model_id)
+        client_model=Dpmodel_model.query.get(model_id)
         client.modelLoad(client_model.content)
         diff=client.getDiff(server.global_model)
         for name, params in server.global_model.state_dict().items():
             weight_accumulator[name].add_(diff[name])
 
         #save epoch info into database
-
+        epoch_client=Epoch(epoch=epoch,is_server=client.server_id,model_id=client_model.id,model_name=client_model.model_name,
+                           user_id=user.id)
+        db.session.add(epoch_client)
 
     server.model_aggregate(weight_accumulator)
     weight_accumulator.clear()
@@ -72,6 +78,12 @@ def serverAggregate():
     model = Dpmodel_model(content=content, model_name=filename, user_id=user.id, file_size=len(content), acc=acc,
                           loss=loss)
     db.session.add(model)
+    db.session.commit()
+
+    model_server=Dpmodel_model.query.filter_by(model_name=filename,user_id=user.id).first()
+    epoch_server=Epoch(epoch=epoch,is_server=0,model_id=model_server.id,model_name=model_server.model_name,
+                       user_id=user.id)
+    db.session.add(epoch_server)
     db.session.commit()
     return packMassage(200,"the acc is %f,loss is %f" % (acc,loss),{"acc":acc,"loss":loss})
 
@@ -106,7 +118,8 @@ def getConf():
     for client in all_clients:
         index = client.number
         train_datasets = dataloader.getTrainData([client.filename])
-        new_client=Client(conf, server.global_model, train_datasets, eval_datasets,index,client.model_name)
+        new_client=Client(conf,server.global_model,train_datasets,eval_datasets,index,client.model_name,client.model_id,
+                          client.number)
         clients.append(new_client)
     return packMassage(200, '初始化成功！', conf)
 

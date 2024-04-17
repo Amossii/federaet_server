@@ -67,4 +67,4 @@ class Epoch(db.Model):
     model_name=db.Column(db.String(100), nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    user = db.relationship("User", backref="models")
+    user = db.relationship("User", backref="epochs")

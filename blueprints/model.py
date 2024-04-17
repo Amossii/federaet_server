@@ -16,20 +16,28 @@ def modelQuery():
                     'acc':model.acc,
                     'loss':model.loss})
     return packMassage(200,"获取用户模型成功!",{'fileInfo':data})
+
 @bp.route('/',methods=['post'])
 def modelAdd():
-    files = ['model.pkl']
-    user=g.user
-    for file_path in files:
-        dir="./file/models/%s" % file_path
-        file_size = os.path.getsize(dir)
-        with open(dir,'rb')as f:
-            text=f.read()
-            model=Dpmodel_model(content=text,model_name=file_path,user_id=user.id,file_size=file_size,acc=0,loss=0)
-            db.session.add(model)
-            db.session.commit()
-        f.close()
-    return packMassage(200,"模型添加完成！",{})
+    user = g.user
+    # 检查是否存在上传文件
+    if 'model' not in request.files:
+        return packMassage(400, 'no model', {})
+
+    model = request.files['model']
+
+    # 检查文件名是否为空
+    if model.filename == '':
+        return packMassage(400, 'No selected file', {})
+
+    # 保存文件到指定路径
+    content = model.read()
+    model = Dpmodel_model(content=content, model_name=model.filename, user_id=user.id, file_size=len(content),acc=0,loss=0)
+    db.session.add(model)
+    db.session.commit()
+
+    return packMassage(200, 'Model uploaded successfully', {})
+
 @bp.route('/',methods=['delete'])
 def modelDelete():
     model_id = request.args.get('id', default='0')

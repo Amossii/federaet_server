@@ -2,21 +2,23 @@ import torch
 import pickle
 class Client:
     # 构造函数
-    def __init__(self, conf, model, train_dataset,eval_dataset, id,local_model_name):
+    def __init__(self, conf, model, train_dataset,eval_dataset, id,local_model_name,model_id,server_id):
         # 配置文件
         self.conf = conf
         # 客户端本地模型(一般由服务器传输)
         self.local_model = model
         # 客户端ID
         self.client_id = id
+        self.server_id=server_id
         self.local_model_name=local_model_name
+        self.model_id=model_id
         # 客户端本地数据集
         self.train_dataset = train_dataset
         self.eval_dataset= eval_dataset
         # 按ID对训练集合的拆分
         all_range = list(range(len(self.train_dataset)))
         data_len = int(len(self.train_dataset) / self.conf['no_models'])
-        indices = all_range[id * data_len: (id + 1) * data_len]
+        # indices = all_range[id * data_len: (id + 1) * data_len]
         # 生成一个数据加载器
         self.train_loader = torch.utils.data.DataLoader(
             # 制定父集合
