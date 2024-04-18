@@ -13,7 +13,6 @@ def info():
         state=epoch.epoch
         if state not in info:
             info[state]=[]
-
         model_id=epoch.model_id
         model=Dpmodel_model.query.get(model_id)
         info[state].append({
