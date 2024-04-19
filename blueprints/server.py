@@ -32,9 +32,14 @@ def serverInit():
 #         weight_accumulator[name] = torch.zeros_like(params)
 #
 #     return packMassage(200,'初始化成功！',{})
-@bp.route('/save')
+@bp.route('/test')
 def serverSave():
-    pass
+    for name, params in server.global_model.state_dict().items():
+        # 生成一个和参数矩阵大小相同的0矩阵
+        weight_accumulator[name] = torch.zeros_like(params)
+        print(params.shape)
+        print(torch.zeros_like(params).shape)
+    return 'done'
 @bp.route('/clear')
 def serverClear():
     conf.clear()
@@ -49,9 +54,12 @@ def serverAggregate():
     filename=filename+'_epoch'+str(epoch)
     # 初始化weight
     weight_accumulator.clear()
+    weight_accumulator_rand={}
     for name, params in server.global_model.state_dict().items():
-        # 生成一个和参数矩阵大小相同的0矩阵
-        weight_accumulator[name] = torch.zeros_like(params)
+        # 生成一个随机参数矩阵,防止服务器知道每个客户端的参数梯度信息
+        randn=torch.randn(params.shape)
+        weight_accumulator[name] = randn
+        weight_accumulator_rand[name]=randn.detach()
 
     for client in clients:
         model_id=client.model_id
@@ -68,6 +76,11 @@ def serverAggregate():
         epoch_client=Epoch(epoch=epoch,is_server=client.server_id,model_id=client_model.id,model_name=client_model.model_name,
                            user_id=user.id)
         db.session.add(epoch_client)
+
+
+    for name, params in server.global_model.state_dict().items():
+        # 还原平均薪水问题中加上的平均数
+        weight_accumulator[name].sub_(weight_accumulator_rand[name])
 
     server.model_aggregate(weight_accumulator)
     weight_accumulator.clear()
