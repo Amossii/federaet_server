@@ -14,8 +14,6 @@ from dplearn.utils.myServer import weight_accumulator
 from dplearn.dataloader import Dataloader
 bp=Blueprint('server',__name__,url_prefix='/server')
 
-#全局一个server对象，包括创建和重置以及全局训练的方法
-
 @bp.route('/init')
 def serverInit():
     pass
