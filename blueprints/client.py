@@ -24,7 +24,7 @@ def clientTrain():
     print("选中的主机号为%d" % candidate.client_id)
 
     print("client %d local train start..."% id )
-    # diff = candidate.local_train(server.global_model)
+    candidate.local_train(server.global_model)
     # 根据客户端的参数差值字典更新总体权重
     # for name, params in server.global_model.state_dict().items():
     #     weight_accumulator[name].add_(diff[name])
@@ -50,11 +50,6 @@ def clientTrain_Save():
     print("选中的主机号为%d" % candidate.client_id)
 
     print("client %d local train start..."% id )
-
-    diff = candidate.local_train(server.global_model)
-
-    # 根据客户端的参数差值字典更新权重
-
 
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
@@ -173,3 +168,44 @@ def clientEval():
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
     return " acc: %f, loss: %f\n" % (acc, loss)
+
+@bp.route('/train_all')
+def train_all():
+    user = g.user
+
+    model_name = request.args.get('epoch', default='0')
+
+    if server.global_model == None:
+        return packMassage(400, 'the server has not been initial!', {})
+
+    for candidate in clients:
+    # candidates = [obj for obj in clients if obj.client_id == id]
+    # if len(candidates) == 0:
+    #     return packMassage(400, "不存在请求的主机号！", {"id": id, "model_name": model_name})
+    #
+    #     candidate = candidates[0]
+        print("选中的主机号为%d" % candidate.client_id)
+
+        print("client %d local train start..." % id)
+
+        acc, loss = candidate.model_eval()
+        print(" acc: %f, loss: %f\n" % (acc, loss))
+        content = candidate.getModel()
+        model_name = str(id) + '_' + "{:.3f}".format(acc) + "_" + "{:.3f}".format(loss) + "epoch" + conf['epoch']
+        candidate.local_model_name = model_name
+
+        model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content), acc=acc,
+                              loss=loss)
+        db.session.add(model)
+        db.session.commit()
+
+        model = Dpmodel_model.query.filter_by(user_id=user.id, model_name=model_name).first()
+        candidate.model_id = model.id
+
+        client = Client_model.query.filter_by(user_id=user.id, number=id).first()
+        client.model_name = model_name
+        client.model_id = model.id
+        client.flag = "success"
+
+        db.session.commit()
+    return packMassage(200,'train all done',{})

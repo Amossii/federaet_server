@@ -12,6 +12,7 @@ from dplearn.utils.globalConf import conf
 from dplearn.utils.myClient import clients
 from dplearn.utils.myServer import weight_accumulator
 from dplearn.dataloader import Dataloader
+from encrypt.homo import SimpleAdditiveHomomorphic
 bp=Blueprint('server',__name__,url_prefix='/server')
 
 @bp.route('/init')
@@ -43,6 +44,68 @@ def serverClear():
     conf.clear()
     weight_accumulator.clear()
     pass
+@bp.route('encrypt')
+def encrypt():
+    #创建一个同态加密实例
+    crypto = SimpleAdditiveHomomorphic()
+
+    user = g.user
+    epoch = conf['epoch']
+    filename = request.args.get("filename", default="global_aggregate")
+    filename = filename + '_epoch' + str(epoch)
+    # 初始化weight
+    weight_accumulator.clear()
+    weight_accumulator_rand = {}
+    for name, params in server.global_model.state_dict().items():
+        # 生成一个随机参数矩阵,防止服务器知道每个客户端的参数梯度信息
+        randn = torch.randn(params.shape)
+        weight_accumulator[name] = randn
+        weight_accumulator_rand[name] = randn.clone()
+
+    for client in clients:
+        model_id = client.model_id
+        if model_id == -1:
+            return packMassage(400, "client model is not exist", {})
+        print(model_id)
+        client_model = Dpmodel_model.query.get(model_id)
+        client.modelLoad(client_model.content)
+        diff = client.encryptDiff(server.global_model,crypto)
+        for name, params in server.global_model.state_dict().items():
+            # print(diff[name])
+            weight_accumulator[name].add_(diff[name])
+
+        # save epoch info into database
+        epoch_client = Epoch(epoch=epoch, is_server=client.server_id, model_id=client_model.id,
+                             model_name=client_model.model_name,
+                             user_id=user.id)
+        db.session.add(epoch_client)
+
+    for name, params in server.global_model.state_dict().items():
+        # 还原平均薪水问题中加上的平均数
+        weight_accumulator[name].sub_(weight_accumulator_rand[name])
+
+    decryption=clients[0].decryptDiff(server.global_model,crypto,weight_accumulator)
+
+    for name, data in server.global_model.state_dict().items():
+        # 更新每一层乘上学习率
+        print(decryption[name])
+
+    server.model_aggregate(decryption)
+
+    # save the model
+    content = server.getModel()
+    acc, loss = server.model_eval()
+    model = Dpmodel_model(content=content, model_name=filename, user_id=user.id, file_size=len(content), acc=acc,
+                          loss=loss)
+    db.session.add(model)
+    db.session.commit()
+
+    model_server = Dpmodel_model.query.filter_by(model_name=filename, user_id=user.id).first()
+    epoch_server = Epoch(epoch=epoch, is_server=0, model_id=model_server.id, model_name=model_server.model_name,
+                         user_id=user.id)
+    db.session.add(epoch_server)
+    db.session.commit()
+    return packMassage(200, "the acc is %f,loss is %f" % (acc, loss), {"acc": acc, "loss": loss})
 
 @bp.route('/aggregate')
 def serverAggregate():
@@ -57,7 +120,7 @@ def serverAggregate():
         # 生成一个随机参数矩阵,防止服务器知道每个客户端的参数梯度信息
         randn=torch.randn(params.shape)
         weight_accumulator[name] = randn
-        weight_accumulator_rand[name]=randn.detach()
+        weight_accumulator_rand[name]=randn.clone()
 
     for client in clients:
         model_id=client.model_id
@@ -70,18 +133,25 @@ def serverAggregate():
         for name, params in server.global_model.state_dict().items():
             weight_accumulator[name].add_(diff[name])
 
+
         #save epoch info into database
         epoch_client=Epoch(epoch=epoch,is_server=client.server_id,model_id=client_model.id,model_name=client_model.model_name,
                            user_id=user.id)
         db.session.add(epoch_client)
 
 
+
     for name, params in server.global_model.state_dict().items():
         # 还原平均薪水问题中加上的平均数
         weight_accumulator[name].sub_(weight_accumulator_rand[name])
 
+    for name, data in server.global_model.state_dict().items():
+        # 更新每一层乘上学习率
+        print(weight_accumulator[name])
+    print('-----------------')
+
+
     server.model_aggregate(weight_accumulator)
-    weight_accumulator.clear()
 
     #save the model
     content=server.getModel()
@@ -129,8 +199,13 @@ def getConf():
     for client in all_clients:
         index = client.number
         train_datasets = dataloader.getTrainData([client.filename])
-        new_client=Client(conf,server.global_model,train_datasets,eval_datasets,index,client.model_name,client.model_id,
-                          client.number)
+        if client.flag!='success':
+            new_client=Client(conf,server.global_model,train_datasets,eval_datasets,index,client.model_name,
+                              client.model_id,client.number)
+        else:
+            client_model=Dpmodel_model.query.get(client.model_id)
+            new_client = Client(conf, client_model, train_datasets, eval_datasets, index, client.model_name,
+                                client.model_id, client.number)
         clients.append(new_client)
     return packMassage(200, '初始化成功！', conf)
 

@@ -53,13 +53,5 @@ def test():
 
     return "This is a test!"
 
-@bp.route('/olda')
-def olda():
-    print(conf)
-    return str(a[0])
 
-@bp.route('/newa')
-def newa():
-    a[0]=1000
-    return str(a[0])
 

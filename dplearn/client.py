@@ -64,21 +64,48 @@ class Client:
                 optimizer.step()
             print("Epoch %d done" % e)
         # 创建差值字典（结构与模型参数同规格），用于记录差值
-        diff = dict()
-        for name, data in self.local_model.state_dict().items():
-            # 计算训练后与训练前的差值
-            diff[name] = (data - model.state_dict()[name])
-        print("Client %d local train done" % self.client_id)
-        # 客户端返回差值
-        return diff
+        # diff = dict()
+        # for name, data in self.local_model.state_dict().items():
+        #     # 计算训练后与训练前的差值
+        #     diff[name] = (data - model.state_dict()[name])
+        # print("Client %d local train done" % self.client_id)
+        # # 客户端返回差值
+        # return diff
     def getDiff(self,model):
         diff = dict()
         for name, data in self.local_model.state_dict().items():
             # 计算训练后与训练前的差值
             diff[name] = (data - model.state_dict()[name])
-        print("Client %d local train done" % self.client_id)
+            # print(diff[name])
         # 客户端返回差值
         return diff
+    def encryptDiff(self,model,crypto):
+        diff=dict()
+        for name, data in self.local_model.state_dict().items():
+            # 计算训练后与训练前的差值
+            tensor=(data - model.state_dict()[name])
+            size=tensor.shape
+            if size== torch.Size([]):
+                diff[name]=tensor
+                continue
+            tensor=tensor.reshape(-1)
+            for i in range(tensor.size(0)):
+                tensor[i]=crypto.encrypt(tensor[i])
+            # print(diff[name])
+            diff[name]=tensor.reshape(size)
+        # 客户端返回差值
+        return diff
+    def decryptDiff(self,model,crypto,weight_accumulator):
+        for name, data in model.state_dict().items():
+        # 更新每一层乘上学习率
+            size = weight_accumulator[name].shape
+            if size == torch.Size([]):
+                continue
+            weight_accumulator[name] = weight_accumulator[name].reshape(-1)
+            for i in range(weight_accumulator[name].size(0)):
+                weight_accumulator[name][i] = crypto.decrypt(weight_accumulator[name][i])
+            weight_accumulator[name]=weight_accumulator[name].reshape(size)
+        return weight_accumulator
     def getModel(self):
         return pickle.dumps(self.local_model)
     def modelSave(self):
