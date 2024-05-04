@@ -38,6 +38,7 @@ class Client:
 
     # 模型本地训练函数
     def local_train(self, model):
+        print("client %d local train start..." % self.client_id)
         # 整体的过程：拉取服务器的模型，通过部分本地数据集训练得到
         for name, param in model.state_dict().items():
             # 客户端首先用服务器端下发的全局模型覆盖本地模型

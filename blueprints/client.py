@@ -82,7 +82,7 @@ def clientTrain_Save():
 
 @bp.route('/init',methods=['POST'])
 def clientInit():
-    pass
+    return "hello"
 
 @bp.route('/clear')
 def clientClearall():
@@ -175,25 +175,22 @@ def clientEval():
 def train_all():
     user = g.user
 
-    model_name = request.args.get('epoch', default='0')
-
+    epoch = request.args.get('epoch', default='0')
     if server.global_model == None:
         return packMassage(400, 'the server has not been initial!', {})
 
-    for candidate in clients:
-    # candidates = [obj for obj in clients if obj.client_id == id]
-    # if len(candidates) == 0:
-    #     return packMassage(400, "不存在请求的主机号！", {"id": id, "model_name": model_name})
-    #
-    #     candidate = candidates[0]
-        print("选中的主机号为%d" % candidate.client_id)
 
-        print("client %d local train start..." % id)
+    for candidate in clients:
+        id=candidate.client_id
+        print("选中的主机号为%d" % id)
+
+        candidate.local_train(server.global_model)
 
         acc, loss = candidate.model_eval()
         print(" acc: %f, loss: %f\n" % (acc, loss))
         content = candidate.getModel()
-        model_name = str(id) + '_' + "{:.3f}".format(acc) + "_" + "{:.3f}".format(loss) + "epoch" + conf['epoch']
+        # '_' + "{:.3f}".format(acc) + "_" + "{:.3f}".format(loss)
+        model_name = str(id)  + "epoch" + str(epoch)
         candidate.local_model_name = model_name
 
         model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content), acc=acc,
@@ -210,4 +207,4 @@ def train_all():
         client.flag = "success"
 
         db.session.commit()
-    return packMassage(200,'train all done',{})
+    return "done"
