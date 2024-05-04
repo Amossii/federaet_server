@@ -51,10 +51,12 @@ def clientTrain_Save():
 
     print("client %d local train start..."% id )
 
+    candidate.local_train(server.global_model)
+
     acc, loss = candidate.model_eval()
     print(" acc: %f, loss: %f\n" % (acc, loss))
     content=candidate.getModel()
-    model_name=str(id)+'_'+"{:.3f}".format(acc)+"_"+"{:.3f}".format(loss)+"epoch"+conf['epoch']
+    model_name=str(id)+'_'+"{:.3f}".format(acc)+"_"+"{:.3f}".format(loss)+"epoch"+str(conf['epoch'])
     candidate.local_model_name=model_name
 
     model = Dpmodel_model(content=content, model_name=model_name, user_id=user.id, file_size=len(content),acc=acc,loss=loss)

@@ -203,7 +203,7 @@ def getConf():
             new_client=Client(conf,server.global_model,train_datasets,eval_datasets,index,client.model_name,
                               client.model_id,client.number)
         else:
-            client_model=Dpmodel_model.query.get(client.model_id)
+            client_model=pickle.loads(Dpmodel_model.query.get(client.model_id).content)
             new_client = Client(conf, client_model, train_datasets, eval_datasets, index, client.model_name,
                                 client.model_id, client.number)
         clients.append(new_client)
