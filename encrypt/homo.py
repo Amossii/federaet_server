@@ -1,17 +1,8 @@
 import random
 from Crypto.Util.number import getPrime
-def creatK():
-    bit_length=4
-    p = getPrime(bit_length)
-    q = getPrime(bit_length)
-    n=p*q
-    r = random.randint(n + 1, 2 * n)
-    k=r*n
-    return n,k
-
 class SimpleAdditiveHomomorphic:
     def __init__(self):
-        bit_length = 4
+        bit_length = 8
         p = getPrime(bit_length)
         q = getPrime(bit_length)
         n = p * q
@@ -36,21 +27,21 @@ class SimpleAdditiveHomomorphic:
     def getK(self):
         return self.k
 
-# 示例
-crypto = SimpleAdditiveHomomorphic()
-
-plaintext1 = 0.00004
-plaintext2 = 0.002
-plaintext3 = 1
-# 加密两个数
-ciphertext1 = crypto.encrypt(plaintext1)
-ciphertext2 = crypto.encrypt(plaintext2)
-ciphertext3=crypto.encrypt(plaintext3)
-# 同态加法
-added_ciphertext = crypto.add(ciphertext1, ciphertext2)
-added_ciphertext=crypto.add(added_ciphertext,ciphertext3)
-
-# 解密结果
-decrypted_result = crypto.decrypt(added_ciphertext)
-
-print(decrypted_result)
+# # 示例
+# crypto = SimpleAdditiveHomomorphic()
+#
+# plaintext1 = 0.00004
+# plaintext2 = 0.002
+# plaintext3 = 1
+# # 加密两个数
+# ciphertext1 = crypto.encrypt(plaintext1)
+# ciphertext2 = crypto.encrypt(plaintext2)
+# ciphertext3=crypto.encrypt(plaintext3)
+# # 同态加法
+# added_ciphertext = crypto.add(ciphertext1, ciphertext2)
+# added_ciphertext=crypto.add(added_ciphertext,ciphertext3)
+#
+# # 解密结果
+# decrypted_result = crypto.decrypt(added_ciphertext)
+#
+# print(decrypted_result)

@@ -1,5 +1,7 @@
 import json
 import pickle
+import time
+
 import cv2
 import numpy as np
 from exts import *
@@ -46,6 +48,7 @@ def serverClear():
     pass
 @bp.route('encrypt')
 def encrypt():
+    s=time.time()
     #创建一个同态加密实例
     crypto = SimpleAdditiveHomomorphic()
 
@@ -57,10 +60,9 @@ def encrypt():
     weight_accumulator.clear()
     weight_accumulator_rand = {}
     for name, params in server.global_model.state_dict().items():
-        # 生成一个随机参数矩阵,防止服务器知道每个客户端的参数梯度信息
-        randn = torch.randn(params.shape)
-        weight_accumulator[name] = randn
-        weight_accumulator_rand[name] = randn.clone()
+        # 生成一个随机参数矩阵,防止服务器知道每个客户端的参数梯度信
+        print(params)
+        weight_accumulator[name] = torch.zeros_like(params)
 
     for client in clients:
         model_id = client.model_id
@@ -80,15 +82,17 @@ def encrypt():
                              user_id=user.id)
         db.session.add(epoch_client)
 
-    for name, params in server.global_model.state_dict().items():
-        # 还原平均薪水问题中加上的平均数
-        weight_accumulator[name].sub_(weight_accumulator_rand[name])
+
+    # for name, data in server.global_model.state_dict().items():
+    #     # 更新每一层乘上学习率
+    #     print(weight_accumulator[name])
 
     decryption=clients[0].decryptDiff(server.global_model,crypto,weight_accumulator)
 
     for name, data in server.global_model.state_dict().items():
         # 更新每一层乘上学习率
         print(decryption[name])
+
 
     server.model_aggregate(decryption)
 
@@ -105,10 +109,12 @@ def encrypt():
                          user_id=user.id)
     db.session.add(epoch_server)
     db.session.commit()
-    return packMassage(200, "the acc is %f,loss is %f" % (acc, loss), {"acc": acc, "loss": loss})
+    end=time.time()
+    return packMassage(200, "the acc is %f,loss is %f" % (acc, loss), {"acc": acc, "loss": loss,"time":end-s})
 
 @bp.route('/aggregate')
 def serverAggregate():
+    start=time.time()
     user=g.user
     epoch = conf['epoch']
     filename=request.args.get("filename",default="global_aggregate")
@@ -129,6 +135,8 @@ def serverAggregate():
         print(model_id)
         client_model=Dpmodel_model.query.get(model_id)
         client.modelLoad(client_model.content)
+        # acc,loss=client.model_eval()
+        # print(acc,loss)
         diff=client.getDiff(server.global_model)
         for name, params in server.global_model.state_dict().items():
             weight_accumulator[name].add_(diff[name])
@@ -145,10 +153,6 @@ def serverAggregate():
         # 还原平均薪水问题中加上的平均数
         weight_accumulator[name].sub_(weight_accumulator_rand[name])
 
-    for name, data in server.global_model.state_dict().items():
-        # 更新每一层乘上学习率
-        print(weight_accumulator[name])
-    print('-----------------')
 
 
     server.model_aggregate(weight_accumulator)
@@ -166,7 +170,8 @@ def serverAggregate():
                        user_id=user.id)
     db.session.add(epoch_server)
     db.session.commit()
-    return packMassage(200,"the acc is %f,loss is %f" % (acc,loss),{"acc":acc,"loss":loss})
+    end=time.time()
+    return packMassage(200,"the acc is %f,loss is %f" % (acc,loss),{"acc":acc,"loss":loss,"time":end-start})
 
 
 

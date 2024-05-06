@@ -1,12 +1,13 @@
 import torch
 import pickle
+import copy
 class Client:
     # 构造函数
     def __init__(self, conf, model, train_dataset,eval_dataset, id,local_model_name,model_id,server_id):
         # 配置文件
         self.conf = conf
         # 客户端本地模型(一般由服务器传输)
-        self.local_model = model
+        self.local_model = copy.deepcopy(model)
         # 客户端ID
         self.client_id = id
         self.server_id=server_id
@@ -91,7 +92,7 @@ class Client:
                 continue
             tensor=tensor.reshape(-1)
             for i in range(tensor.size(0)):
-                tensor[i]=crypto.encrypt(tensor[i])
+                tensor[i]=crypto.encrypt(int(tensor[i]*1000))
             # print(diff[name])
             diff[name]=tensor.reshape(size)
         # 客户端返回差值
@@ -104,7 +105,7 @@ class Client:
                 continue
             weight_accumulator[name] = weight_accumulator[name].reshape(-1)
             for i in range(weight_accumulator[name].size(0)):
-                weight_accumulator[name][i] = crypto.decrypt(weight_accumulator[name][i])
+                weight_accumulator[name][i] = crypto.decrypt(weight_accumulator[name][i])/1000
             weight_accumulator[name]=weight_accumulator[name].reshape(size)
         return weight_accumulator
     def getModel(self):
