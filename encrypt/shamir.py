@@ -24,7 +24,6 @@ def polynom(x, coefficients):
     获取f(x)的值
     """
     point = 0
-    # coeff从左到右是高次到低次的(使用enumerate表示指数)
     for coefficient_index, coefficient_value in enumerate(coefficients[::-1]):
         point += x ** coefficient_index * coefficient_value
     return point
@@ -70,13 +69,11 @@ def reconstruct_secret(shares):
 def shamir(secret=1234,t=5,n=10):
     print(f'Original Secret: {secret}')
 
-    # Phase I: Generation of shares
+
     shares = generate_shares(n, t, secret)
     print(f'Shares: {", ".join(str(share) for share in shares)}')
 
-    # Phase II: Secret Reconstruction
-    # Picking t shares randomly for
-    # reconstruction
+
     pool = random.sample(shares, t)
     print(f'Combining shares: {", ".join(str(share) for share in pool)}')
     print(f'Reconstructed secret: {reconstruct_secret(pool)}')

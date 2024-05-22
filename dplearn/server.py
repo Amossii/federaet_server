@@ -31,20 +31,6 @@ class Server:
             self.global_model = pickle.loads(model_init)
         # 生成一个测试集合加载器
 
-        #this is a change
-
-        # conv1 = self.global_model.conv1
-        #
-        # # 修改第一个卷积层的参数以保留原始输入图像的尺寸
-        # # 假设输入图像的尺寸是 [3, 32, 32]
-        # # 计算填充大小，使得特征图的高度和宽度与输入图像相同
-        # # 注意：这里假设使用了卷积核大小为3x3，步长为1的卷积操作
-        # padding = (1, 1)  # 由于卷积核大小为3x3，填充大小为1
-        # conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=padding, bias=False)
-        #
-        # # 将修改后的第一个卷积层设置回ResNet-18模型中
-        # self.global_model.conv1 = conv1
-
         #upon is a change
         self.eval_loader = torch.utils.data.DataLoader(
             eval_dataset,
