@@ -19,11 +19,10 @@ def getCaptcha():
     })
 @bp.route('/photo')
 def getphoto():
-    filename=request.args.get('filename')
+    file_id=request.args.get('id',default=60)
 
-    photo=File.query.filter_by(filename=filename).first()
-    if not photo:
-        return packMassage(400,'the photo you search is not exist!',{})
+    photo=File.query.get(file_id).content
+
     dict=pickle.loads(photo.content)
     data=dict[b'data'][0]
     img=data.reshape(3,32,32)

@@ -125,7 +125,10 @@ def clientQuery():
             'join_time': client.join_time,
             "model_name":client.model_name,
             "flag":client.flag,
-            "model_id":client.model_id})
+            "model_id":client.model_id,
+            "xi":client.xi,
+            "yi":client.yi,
+            "cipher":client.cipher})
     return packMassage(200, "获取用户主机成功!", {'fileInfo': data})
 
 @bp.route('/',methods=['delete'])

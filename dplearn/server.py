@@ -105,39 +105,4 @@ class Server:
         return pred.item(),target.item()
 
     def heat(self,file_path):
-        from torchcam.methods import GradCAM
-        target_layer = self.global_model.layer4[-1]  # 选择目标层
-        cam_extractor = GradCAM(self.global_model, target_layer)
-        img_path = file_path
-        img_pil = Image.open(img_path)
-
-        from torchvision import transforms
-        # # 测试集图像预处理-RCTN：缩放、裁剪、转 Tensor、归一化
-        test_transform = transforms.Compose([transforms.Resize(256),
-                                             transforms.CenterCrop(224),
-                                             transforms.ToTensor(),
-                                             transforms.Normalize(
-                                                 mean=[0.485, 0.456, 0.406],
-                                                 std=[0.229, 0.224, 0.225])
-                                             ])
-        print(type(img_pil))
-        input_tensor = test_transform(img_pil).unsqueeze(0)  # 预处理
-        pred_logits = self.global_model(input_tensor)
-        # # topk()方法用于返回输入数据中特定维度上的前k个最大的元素
-        pred_top1 = torch.topk(pred_logits, 1)
-        # # pred_id 为图片所属分类对应的索引号，分类和索引号存储在imagenet_class_index.csv
-        pred_id = pred_top1[1].detach().cpu().numpy().squeeze().item()
-        print(pred_id)
-
-        activation_map = cam_extractor(pred_id, pred_logits)
-        activation_map = activation_map[0][0].detach().cpu().numpy()
-        #
-        # # 可视化
-        from torchcam.utils import overlay_mask
-        #
-        # # overlay_mask 用于构建透明的叠加层
-        # # fromarray 实现array到image的转换
-        result = overlay_mask(img_pil, Image.fromarray(activation_map), alpha=0.7)
-        import matplotlib.pyplot as plt
-        plt.imshow(result)
-        plt.show()
+        pass

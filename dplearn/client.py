@@ -22,11 +22,9 @@ class Client:
         # indices = all_range[id * data_len: (id + 1) * data_len]
         # 生成一个数据加载器
         self.train_loader = torch.utils.data.DataLoader(
-            # 制定父集合
             self.train_dataset,
             # batch_size每个batch加载多少个样本(默认: 1)
             batch_size=conf["batch_size"],
-            # 指定子集合
             # sampler定义从数据集中提取样本的策略
             # sampler=torch.utils.data.sampler.SubsetRandomSampler(indices)
         )
@@ -40,7 +38,6 @@ class Client:
     # 模型本地训练函数
     def local_train(self, model):
         print("client %d local train start..." % self.client_id)
-        # 整体的过程：拉取服务器的模型，通过部分本地数据集训练得到
         for name, param in model.state_dict().items():
             # 客户端首先用服务器端下发的全局模型覆盖本地模型
             self.local_model.state_dict()[name].copy_(param.clone())
@@ -56,13 +53,9 @@ class Client:
                 data, target = batch
                 # 梯度
                 optimizer.zero_grad()
-                # 训练预测
                 output = self.local_model(data)
-                # 计算损失函数 cross_entropy交叉熵误差
                 loss = torch.nn.functional.cross_entropy(output, target)
-                # 反向传播
                 loss.backward()
-                # 更新参数
                 optimizer.step()
             print("Epoch %d done" % e)
         # 创建差值字典（结构与模型参数同规格），用于记录差值
@@ -116,7 +109,7 @@ class Client:
     def modelLoad(self,content):
         self.local_model = pickle.loads(content)
     def model_eval(self):
-        self.local_model.eval()  # 开启模型评估模式（不修改参数）
+        self.local_model.eval()  # 开启模型评估模式
         total_loss = 0.0
         correct = 0
         dataset_size = 0

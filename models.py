@@ -41,6 +41,9 @@ class Client_model(db.Model):
     model_name = db.Column(db.String(100), nullable=False)
     flag = db.Column(db.String(100), nullable=False)
     model_id = db.Column(db.Integer)
+    xi = db.Column(db.String(100))
+    yi = db.Column(db.String(100))
+    cipher= db.Column(db.String(100))
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="clients")
@@ -65,6 +68,8 @@ class Epoch(db.Model):
     is_server=db.Column(db.Integer, default=0)
     model_id=db.Column(db.Integer, default=0)
     model_name=db.Column(db.String(100), nullable=False)
+    acc = db.Column(db.Double, default=0)
+    loss = db.Column(db.Double, default=0)
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", backref="epochs")

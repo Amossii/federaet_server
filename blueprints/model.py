@@ -1,4 +1,5 @@
 import os
+import pickle
 from exts import *
 from models import Dpmodel_model
 bp=Blueprint('dpmodel',__name__,url_prefix='/model')
@@ -21,6 +22,7 @@ def modelQuery():
 def modelAdd():
     user = g.user
     # 检查是否存在上传文件
+    print(request.files)
     if 'model' not in request.files:
         return packMassage(400, 'no model', {})
 
@@ -49,3 +51,15 @@ def modelDelete():
         return packMassage(200, "删除模型成功", {})
     else:
         return packMassage(400, "模型不存在", {})
+
+@bp.route('/localUpload',methods=['post'])
+def localUpload():
+    user=g.user
+    with open('D:\Python\codeServer\imagenet\model\model2', 'rb') as f:
+        content = f.read()
+
+    model = Dpmodel_model(content=content, model_name='imageNet', user_id=user.id, file_size=len(content), acc=0,
+                          loss=0)
+    db.session.add(model)
+    db.session.commit()
+    return 'done'

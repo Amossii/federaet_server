@@ -15,6 +15,7 @@ from dplearn.utils.myClient import clients
 from dplearn.utils.myServer import weight_accumulator
 from dplearn.dataloader import Dataloader
 from encrypt.homo import SimpleAdditiveHomomorphic
+from encrypt.shamir import *
 bp=Blueprint('server',__name__,url_prefix='/server')
 
 @bp.route('/init')
@@ -58,9 +59,7 @@ def encrypt():
     filename = filename + '_epoch' + str(epoch)
     # 初始化weight
     weight_accumulator.clear()
-    weight_accumulator_rand = {}
     for name, params in server.global_model.state_dict().items():
-        # 生成一个随机参数矩阵,防止服务器知道每个客户端的参数梯度信
         print(params)
         weight_accumulator[name] = torch.zeros_like(params)
 
@@ -117,16 +116,17 @@ def serverAggregate():
     start=time.time()
     user=g.user
     epoch = conf['epoch']
-    filename=request.args.get("filename",default="global_aggregate")
+    filename=request.args.get("modelName",default="global_aggregate")
     filename=filename+'_epoch'+str(epoch)
     # 初始化weight
     weight_accumulator.clear()
     weight_accumulator_rand={}
     for name, params in server.global_model.state_dict().items():
         # 生成一个随机参数矩阵,防止服务器知道每个客户端的参数梯度信息
-        randn=torch.randn(params.shape)
-        weight_accumulator[name] = randn
-        weight_accumulator_rand[name]=randn.clone()
+        # randn=torch.randn(params.shape)
+        # weight_accumulator[name] = randn
+        # weight_accumulator_rand[name]=randn.clone()
+        weight_accumulator[name]=torch.randn(params.shape)
 
     for client in clients:
         model_id=client.model_id
@@ -144,14 +144,14 @@ def serverAggregate():
 
         #save epoch info into database
         epoch_client=Epoch(epoch=epoch,is_server=client.server_id,model_id=client_model.id,model_name=client_model.model_name,
-                           user_id=user.id)
+                           user_id=user.id,acc=client_model.acc,loss=client_model.loss)
         db.session.add(epoch_client)
 
 
 
-    for name, params in server.global_model.state_dict().items():
-        # 还原平均薪水问题中加上的平均数
-        weight_accumulator[name].sub_(weight_accumulator_rand[name])
+    # for name, params in server.global_model.state_dict().items():
+    #     # 还原平均薪水问题中加上的平均数
+    #     weight_accumulator[name].sub_(weight_accumulator_rand[name])
 
 
 
@@ -167,7 +167,7 @@ def serverAggregate():
 
     model_server=Dpmodel_model.query.filter_by(model_name=filename,user_id=user.id).first()
     epoch_server=Epoch(epoch=epoch,is_server=0,model_id=model_server.id,model_name=model_server.model_name,
-                       user_id=user.id)
+                       user_id=user.id,acc=acc,loss=loss)
     db.session.add(epoch_server)
     db.session.commit()
     end=time.time()
@@ -198,10 +198,15 @@ def getConf():
 
     #添加client到clients里
 
+
+
     clients.clear()
     dataloader = Dataloader()
     all_clients=g.user.clients
+
+
     for client in all_clients:
+
         index = client.number
         train_datasets = dataloader.getTrainData([client.filename])
         if client.flag!='success':
@@ -212,6 +217,7 @@ def getConf():
             new_client = Client(conf, client_model, train_datasets, eval_datasets, index, client.model_name,
                                 client.model_id, client.number)
         clients.append(new_client)
+
     return packMassage(200, '初始化成功！', conf)
 
 @bp.route('/eval')
@@ -284,3 +290,21 @@ def heat():
         , np.transpose(nd, (1, 2, 0)))
     server.heat('D:\Python\myapp\\file\img\Figure_3.jpg')
     return "done"
+
+@bp.route('key',methods=['get'])
+def generate_key():
+    user=g.user
+    myClients=user.clients
+
+    client_num = len(g.user.clients)
+
+    crypto = SimpleAdditiveHomomorphic()
+    conf['key'] = crypto.k
+    shares = shamir(conf['key'], client_num, client_num)
+    for client,share in zip(myClients,shares):
+        client.xi = str(share[0])
+        client.yi = str(share[1])
+        client.cipher = str(conf['key'])
+    db.session.commit()
+    print(shares)
+    return packMassage(200,'the key is generating',{'data':shares})
